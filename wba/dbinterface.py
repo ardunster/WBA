@@ -39,18 +39,35 @@ First, need to make sure I have a functional config accessible.
 
 '''
 
-import psycopg2
+import psycopg2 as pg2
 import configparser
 import os
+import datetime
 
 config = configparser.ConfigParser()
 configpath = os.path.join('config', '')
+logpath = os.path.join('logs', '')
 
-def write_pgs_config(hostname='localhost',username='wba_login',password='wba_password',dbname='wba_default'):
+def dbi_log(string):
+    '''
+    Can be called any time data needs to be logged. Writes to file.
+    '''
+    try:
+        with open(logpath + 'dbi_logs.txt', 'a') as dbi_logfile:
+            dbi_logfile.write('Log Time: ' + str(datetime.datetime.now()) + '\n')
+            dbi_logfile.write('Log Data: ' + string + '\n\n')
+    except FileNotFoundError:
+        os.makedirs(logpath, exist_ok=True)
+        dbi_log(string)
+    
+    
+
+def write_pgs_config(hostname='localhost',port='5432',username='wba_login',password='wba_password',dbname='wba_default'):
     '''
     Writes PostgreSQL config file based on variables passed.
     '''
     config['PostgreSQL'] = {'hostname':hostname,
+                            'port':port,
                             'username':username,
                             'password':password,
                             'dbname':dbname}
@@ -70,25 +87,49 @@ def get_pgs_config():
     try:
         config.read(configpath + 'pgs_config.ini')
         hostname = config['PostgreSQL']['hostname']
+        port = config['PostgreSQL']['port']
         username = config['PostgreSQL']['username']
         password = config['PostgreSQL']['password']
         dbname = config['PostgreSQL']['dbname']
     except KeyError:
         write_pgs_config()
-        hostname,username,password,dbname = get_pgs_config()
+        hostname,port,username,password,dbname = get_pgs_config()
     
-    return hostname,username,password,dbname
+    return (hostname,port,username,password,dbname)
 
 
-def check_for_db(dbname):
+def conn_wba(hostname,port,username,password,dbname):
     '''
-    Connects to PostgreSQL and looks for provided database name.
+    Builds a connection to the PostgreSQL server
+    '''
+    try:
+        conn = pg2.connect(f'dbname={dbname} user={username} password={password} host={hostname} port={port}')
+    except Exception as e:
+        dbi_log(e)
+        
+    return conn
+
+
+def check_for_table(tablename):
+    '''
+    Input: conn_cur = psycopg2 connection cursor object, tablename = string of name of table to look for.
+    Connects to PostgreSQL and looks for provided table name.
     Returns: True or False
     '''
-    pass
+    conn = conn_wba(*get_pgs_config())
+    select_from = 'SELECT * FROM ' + tablename
+    try:
+        conn.cursor().execute(select_from)
+    except pg2.ProgrammingError as e:
+        dbi_log(str(e))
+        return False
+    else:
+        return True
+    finally:
+        conn.close()
 
 
-print(get_pgs_config())
+
 
 '''
 CREATE ROLE wba_login WITH

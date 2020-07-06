@@ -153,3 +153,79 @@ def create_table(table_name, **kwargs):
     conn.close()
 
 
+def fetch_from_table(table_name):
+    '''
+    Retrieves information from table, returns ?
+    '''
+    pass
+
+
+def write_to_table(table_name, **kwargs):
+    '''
+    Writes information to table
+    '''
+    pass
+
+
+# Specific Tables default setup
+
+
+def create_character_table():
+    '''
+    Creates the default setup for the character information table.
+    '''
+    pass
+
+
+def create_events_table():
+    '''
+    Creates teh default setup for the events information table.
+    '''
+    pass
+
+
+def create_factions_table():
+    '''
+    Creates the default setup for the factions and species table.
+    '''
+    pass
+
+def create_locations_table():
+    '''
+    Creates the default setup for the locations table.
+    '''
+    pass
+
+
+def create_powers_table():
+    '''
+    Creates the default setup for the magic and powers table.
+    '''
+    pass
+
+
+def create_maps_table():
+    '''
+    Creates the default setup for the maps table.
+    '''
+    pass
+
+# Next: Figure out which relationship tables I need
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

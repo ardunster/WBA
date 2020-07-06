@@ -117,7 +117,7 @@ def check_for_table(tablename):
     Returns: True or False
     '''
     conn = conn_wba(*get_pgs_config())
-    select_from = 'SELECT * FROM ' + tablename
+    select_from = 'SELECT * FROM ' + tablename + ';'
     try:
         conn.cursor().execute(select_from)
     except pg2.ProgrammingError as e:
@@ -132,30 +132,24 @@ def check_for_table(tablename):
         conn.close()
 
 
-def create_table(*args):
+def create_table(table_name, **kwargs):
     '''
-    Creates a table in the WBA database, based on provided arguments
+    Creates a table in the WBA database. 
+    **kwargs: name_of_column='TYPE column constraints'
+    
+    Ex:
+    create_table('test_table', test_id='SERIAL PRIMARY KEY', name='VARCHAR (25) NOT NULL', created_on='TIMESTAMPTZ')
     '''
-    pass
+    conn = conn_wba(*get_pgs_config())
+    create = f'''CREATE TABLE {table_name} ('''
+    for key in kwargs:
+        create += f'''{key} {kwargs[key]}, '''
+    create = create[:-2]
+    create +=''');'''
+    
+    conn.cursor().execute(create)
+    conn.commit()
 
-def random_log_something(something):
-    try:
-        something += 'fred'
-        return something
-    except Exception as e:
-        dbi_log((e.__class__.__name__ + ' ' + str(e)))
+    conn.close()
 
 
-
-
-'''
-CREATE ROLE wba_login WITH
-	LOGIN
-	NOSUPERUSER
-	CREATEDB
-	NOCREATEROLE
-	INHERIT
-	NOREPLICATION
-	CONNECTION LIMIT -1
-	PASSWORD 'xxxxxx';
-    '''

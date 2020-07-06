@@ -48,14 +48,14 @@ config = configparser.ConfigParser()
 configpath = os.path.join('config', '')
 logpath = os.path.join('logs', '')
 
-def dbi_log(string):
+def dbi_log(log_input):
     '''
     Can be called any time data needs to be logged. Writes to file.
     '''
     try:
-        with open(logpath + 'dbi_logs.txt', 'a') as dbi_logfile:
+        with open(logpath + 'dbi_logs.log', 'a') as dbi_logfile:
             dbi_logfile.write('Log Time: ' + str(datetime.datetime.now()) + '\n')
-            dbi_logfile.write('Log Data: ' + string + '\n\n')
+            dbi_logfile.write('Log Data: ' + str(log_input) + '\n\n')
     except FileNotFoundError:
         os.makedirs(logpath, exist_ok=True)
         dbi_log(string)
@@ -123,10 +123,27 @@ def check_for_table(tablename):
     except pg2.ProgrammingError as e:
         dbi_log(str(e))
         return False
+    except Exception as e:
+        dbi_log((e.__class__.__name__ + ' ' + str(e)))
+        raise
     else:
         return True
     finally:
         conn.close()
+
+
+def create_table(*args):
+    '''
+    Creates a table in the WBA database, based on provided arguments
+    '''
+    pass
+
+def random_log_something(something):
+    try:
+        something += 'fred'
+        return something
+    except Exception as e:
+        dbi_log((e.__class__.__name__ + ' ' + str(e)))
 
 
 

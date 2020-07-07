@@ -14,7 +14,8 @@ check for existence of the db we want
 create it if not. Maybe these two can run in setup.py? I'll get it working now
 and move later if need be.
 
-need functions that export db and import db.
+need functions that export db and import db. -> autosave option, automatically 
+exports db at x interval, or on exit?
 
 in setup, also need options for importing from existing file. and of course
 all the different kinds of setup options, ie, questions for multiple species, 
@@ -37,6 +38,9 @@ maybe: https://www.mssqltips.com/sqlservertip/5173/encrypting-passwords-for-use-
 Maybe: gen the config in one function, write it to a bin in a separate function?
 First, need to make sure I have a functional config accessible.
 
+todo: create a function for verifying the login credentials stored in config work, and 
+otherwise return error.
+
 '''
 
 import psycopg2 as pg2
@@ -47,6 +51,7 @@ import datetime
 config = configparser.ConfigParser()
 configpath = os.path.join('config', '')
 logpath = os.path.join('logs', '')
+
 
 def dbi_log(log_input):
     '''
@@ -105,19 +110,20 @@ def conn_wba(hostname,port,username,password,dbname):
     try:
         conn = pg2.connect(f'dbname={dbname} user={username} password={password} host={hostname} port={port}')
     except Exception as e:
-        dbi_log(e)
+        dbi_log((e.__class__.__name__ + ' ' + str(e)))
+        raise
         
     return conn
 
 
-def check_for_table(tablename):
+def check_for_table(table_name):
     '''
     Input: conn_cur = psycopg2 connection cursor object, tablename = string of name of table to look for.
     Connects to PostgreSQL and looks for provided table name.
     Returns: True or False
     '''
     conn = conn_wba(*get_pgs_config())
-    select_from = 'SELECT * FROM ' + tablename + ';'
+    select_from = 'SELECT * FROM ' + table_name + ';'
     try:
         conn.cursor().execute(select_from)
     except pg2.ProgrammingError as e:
@@ -153,6 +159,69 @@ def create_table(table_name, **kwargs):
     conn.close()
 
 
+def setup_modified_function():
+    '''
+    Creates the function update_modified_function() in PostgreSQL to update last modified columns
+    '''
+    conn = conn_wba(*get_pgs_config())
+    
+    function = '''CREATE OR REPLACE FUNCTION update_modified_function()
+                RETURNS TRIGGER AS 
+                $$
+                BEGIN
+                NEW.modified = Now(); 
+                RETURN NEW;
+                END;
+                $$ 
+                language 'plpgsql';
+                '''
+    
+    conn.cursor().execute(function)
+    conn.commit()
+
+    conn.close()
+
+
+def setup_modified_trigger(table_name):
+    '''
+    Sets up trigger for modified column function in specified table name
+    '''
+    conn = conn_wba(*get_pgs_config())
+    
+    trigger = f'''CREATE TRIGGER set_modified
+                BEFORE UPDATE ON {table_name}
+                FOR EACH ROW
+                EXECUTE PROCEDURE update_modified_function();
+                '''
+    
+    conn.cursor().execute(trigger)
+    conn.commit()
+
+    conn.close()
+    
+
+def write_new_to_table(table_name, **kwargs):
+    '''
+    Writes a single new entry to specified table
+    '''
+    conn = conn_wba(*get_pgs_config())
+    
+    write = f'''INSERT INTO {table_name} ('''
+    for key in kwargs:
+        write += f'''{key}, '''
+    write = write[:-2]
+    write += ''') VALUES ('''
+    for key in kwargs:
+        write += f"""'{kwargs[key]}', """
+    write = write[:-2]
+    write += ''');'''
+    
+    conn.cursor().execute(write)
+    conn.commit()
+
+    conn.close()
+
+
 def fetch_from_table(table_name):
     '''
     Retrieves information from table, returns ?
@@ -160,21 +229,24 @@ def fetch_from_table(table_name):
     pass
 
 
-def write_to_table(table_name, **kwargs):
-    '''
-    Writes information to table
-    '''
-    pass
 
 
-# Specific Tables default setup
 
+# Specific Tables: Create Default Setup
+
+# Primary Tables
 
 def create_character_table():
     '''
     Creates the default setup for the character information table.
     '''
-    pass
+    
+    create_table('character', character_id='SERIAL PRIMARY KEY',
+                 character_name='TEXT NOT NULL', description='TEXT', 
+                 notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+    
+    setup_modified_trigger('character')
 
 
 def create_events_table():
@@ -210,14 +282,60 @@ def create_maps_table():
     '''
     pass
 
+def create_images_table():
+    '''
+    Creates the default setup for the images table.
+    '''
+    # How to best store image references in PostgreSQL?
+    pass
+
+
+# Relationship Tables
+
+# For Characters
+
+
+def create_char_events_table():
+    '''
+    Creates the default setup for the character-events relationship table
+    '''
+    # character_id, event_id
+    pass
+
+
+def create_char_factions_table():
+    '''
+    Creates the default setup for the character-species/factions relationship table
+    '''
+    # character_id, sp/fact_id, "is" for species, positive association, negative associations
+    pass
+
+
+def create_char_powers_table():
+    '''
+    Creates the default setup for the character-powers/magic relationship table
+    '''
+    # character_id, power_id, "has", details='TEXT'
+    pass
+
+
+
 # Next: Figure out which relationship tables I need
 
 
 
 
-
-
-
+def write_new_char(**kwargs):
+    '''
+    Writes a new entry in character table
+    '''
+    
+    write_new_to_table('character', **kwargs)
+    
+    # This works but is probably pointless. What's my architecture going to
+    # look like to make a new entry? I'll come back to this/make more if
+    # caling write_new_to_table() doesn't work well enough by itself, otherwise 
+    # I'll delete this if I don't end up actually using it. 
 
 
 

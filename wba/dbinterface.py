@@ -241,7 +241,7 @@ def fetch_from_table(table_name):
 def create_character_table():
     '''
     Creates the default setup for the character information table ('character').
-    character_name will be displayed in selection dropdown.
+    character_name will be displayed in selection menu.
     '''
     
     create_table('character', character_id='SERIAL PRIMARY KEY',
@@ -256,7 +256,7 @@ def create_character_table():
 def create_events_table():
     '''
     Creates the default setup for the events information table. 
-    headline will be displayed in selection dropdown.
+    headline will be displayed in the selection menu.
     Year, Month, Day of Month, Time will be used to generate position in Timeline.
     They are all integers, because they are referring to possibly fictitious 
     date/time information that may not work with a normal datetime format. 
@@ -275,8 +275,20 @@ def create_events_table():
 def create_factions_table():
     '''
     Creates the default setup for the factions and species table.
+    name will be displayed in the selection menu.
+    is_species is used to determine whether entry appears in faction selections
+    (False) or in species selections (True).
     '''
-    pass
+    
+    create_table('factions', faction_id='SERIAL PRIMARY KEY',
+                 name='TEXT NOT NULL', description='TEXT',
+                 notes='TEXT', is_species='BOOLEAN DEFAULT "FALSE"', 
+                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+    
+    setup_modified_trigger('factions')
+
 
 def create_locations_table():
     '''
@@ -365,7 +377,32 @@ def create_events_locations_table():
     '''
     # event_id, location_id, occurred in location, affected location - maybe 
     # simplify some of these, with just 'involves', the description will explain more
-    
+    pass
+
+
+# For Factions
+
+def create_factions_factions_table():
+    '''
+    Creates the default setup for the factions-factions relationship table.
+    '''
+    # faction_id, faction_id, positive/negative association, notes? Type of relation?
+    pass
+
+def create_factions_locations_table():
+    '''
+    Creates the default setup for the factions/locations relationship table.
+    '''
+    # faction_id, location_id, homeland, type of relation?
+    pass
+
+
+def create_factions_powers_table():
+    '''
+    Creates the default setup for the factions/powers relationship table.
+    '''
+    # faction id, power_id, can have, prevented from having
+    pass
 
 
 # Next: Figure out which relationship tables I need

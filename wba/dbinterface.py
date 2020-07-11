@@ -41,6 +41,8 @@ First, need to make sure I have a functional config accessible.
 todo: create a function for verifying the login credentials stored in config work, and 
 otherwise return error.
 
+todo: fix anything that actually takes user input to SQL to prevent injections
+
 '''
 
 import psycopg2 as pg2
@@ -238,12 +240,14 @@ def fetch_from_table(table_name):
 
 def create_character_table():
     '''
-    Creates the default setup for the character information table.
+    Creates the default setup for the character information table ('character').
+    character_name will be displayed in selection dropdown.
     '''
     
     create_table('character', character_id='SERIAL PRIMARY KEY',
                  character_name='TEXT NOT NULL', description='TEXT', 
-                 notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
     setup_modified_trigger('character')
@@ -251,9 +255,21 @@ def create_character_table():
 
 def create_events_table():
     '''
-    Creates teh default setup for the events information table.
+    Creates the default setup for the events information table. 
+    headline will be displayed in selection dropdown.
+    Year, Month, Day of Month, Time will be used to generate position in Timeline.
+    They are all integers, because they are referring to possibly fictitious 
+    date/time information that may not work with a normal datetime format. 
     '''
-    pass
+    
+    create_table('events', event_id='SERIAL PRIMARY KEY',
+                 headline='TEXT NOT NULL', description='TEXT',
+                 year='INTEGER', month='INTEGER', dofm='INTEGER', time='INTEGER',
+                 notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+    
+    setup_modified_trigger('events')
 
 
 def create_factions_table():
@@ -294,20 +310,26 @@ def create_images_table():
 
 # For Characters
 
+def create_char_char_table():
+    '''
+    Creates the default setup for the character-character relationship table
+    '''
+    #character 1, character 2, positive/negative association, short desc
+    pass
 
 def create_char_events_table():
     '''
     Creates the default setup for the character-events relationship table
     '''
-    # character_id, event_id
+    # character_id, event_id, involved in, present at?, affected by
     pass
 
 
 def create_char_factions_table():
     '''
-    Creates the default setup for the character-species/factions relationship table
+    Creates the default setup for the character-factions/species relationship table
     '''
-    # character_id, sp/fact_id, "is" for species, positive association, negative associations
+    # character_id, sp/fact_id, "character is" for species, positive association, negative associations
     pass
 
 
@@ -318,6 +340,32 @@ def create_char_powers_table():
     # character_id, power_id, "has", details='TEXT'
     pass
 
+
+# For Events
+
+def create_events_factions_table():
+    '''
+    Creates the default setup for the events-factions/species relationship table
+    '''
+    # event_id, faction_id, caused by, affected by
+    pass
+
+
+def create_events_events_table():
+    '''
+    Creates the default setup for the events-events relationship table
+    '''
+    # event_id, event_id, directly related to event
+    pass
+
+
+def create_events_locations_table():
+    '''
+    Creates the default setup for the events-locations relationship table
+    '''
+    # event_id, location_id, occurred in location, affected location - maybe 
+    # simplify some of these, with just 'involves', the description will explain more
+    
 
 
 # Next: Figure out which relationship tables I need

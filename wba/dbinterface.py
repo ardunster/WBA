@@ -206,6 +206,7 @@ def write_new_to_table(table_name, **kwargs):
     '''
     Writes a single new entry to specified table
     '''
+    # TODO: needs rewrite to prevent SQL injection/input bugs
     conn = conn_wba(*get_pgs_config())
     
     write = f'''INSERT INTO {table_name} ('''
@@ -240,8 +241,8 @@ def fetch_from_table(table_name):
 
 def create_character_table():
     '''
-    Creates the default setup for the character information table ('character').
-    character_name will be displayed in selection menu.
+    Creates the default setup for the character information table.
+    character_name will be displayed in selection menus.
     '''
     
     create_table('character', character_id='SERIAL PRIMARY KEY',
@@ -256,14 +257,14 @@ def create_character_table():
 def create_events_table():
     '''
     Creates the default setup for the events information table. 
-    headline will be displayed in the selection menu.
+    event_headline will be displayed in selection menus.
     Year, Month, Day of Month, Time will be used to generate position in Timeline.
     They are all integers, because they are referring to possibly fictitious 
     date/time information that may not work with a normal datetime format. 
     '''
     
     create_table('events', event_id='SERIAL PRIMARY KEY',
-                 headline='TEXT NOT NULL', description='TEXT',
+                 event_headline='TEXT NOT NULL', description='TEXT',
                  year='INTEGER', month='INTEGER', dofm='INTEGER', time='INTEGER',
                  notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
@@ -275,13 +276,13 @@ def create_events_table():
 def create_factions_table():
     '''
     Creates the default setup for the factions and species table.
-    name will be displayed in the selection menu.
+    faction_name will be displayed in selection menus.
     is_species is used to determine whether entry appears in faction selections
     (False) or in species selections (True).
     '''
     
     create_table('factions', faction_id='SERIAL PRIMARY KEY',
-                 name='TEXT NOT NULL', description='TEXT',
+                 faction_name='TEXT NOT NULL', description='TEXT',
                  notes='TEXT', is_species='BOOLEAN DEFAULT "FALSE"', 
                  secret='BOOLEAN DEFAULT "FALSE"', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
@@ -290,31 +291,62 @@ def create_factions_table():
     setup_modified_trigger('factions')
 
 
-def create_locations_table():
-    '''
-    Creates the default setup for the locations table.
-    '''
-    pass
-
-
 def create_powers_table():
     '''
     Creates the default setup for the magic and powers table.
+    power_name will be displayed in selection menus.
     '''
-    pass
+    
+    create_table('powers', power_id='SERIAL PRIMARY KEY',
+                 power_name='TEXT NOT NULL', description='TEXT',
+                 limits='TEXT', notes='TEXT', 
+                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+    
+    setup_modified_trigger('powers')
+
+
+def create_locations_table():
+    '''
+    Creates the default setup for the locations table.
+    location_name will be displayed in selection menus.
+    '''
+    
+    create_table('locations', location_id='SERIAL PRIMARY KEY',
+                 location_name='TEXT NOT NULL', description='TEXT',
+                 notes='TEXT', 
+                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+    
+    setup_modified_trigger('locations')
 
 
 def create_maps_table():
     '''
     Creates the default setup for the maps table.
+    map_name will be displayed in selection menu
+    caption will be displayed on map
     '''
-    pass
+    
+    create_table('maps', map_id='SERIAL PRIMARY KEY',
+                 map_name='TEXT NOT NULL', caption='TEXT',
+                 notes='TEXT', 
+                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+    
+    setup_modified_trigger('maps')
+
 
 def create_images_table():
     '''
     Creates the default setup for the images table.
     '''
     # How to best store image references in PostgreSQL?
+    # thumbnail resize stored in DB, full size image (click to view) on hd in 
+    # file path, allows user to view images independently of WBA. Does this make sense?
     pass
 
 
@@ -324,14 +356,14 @@ def create_images_table():
 
 def create_char_char_table():
     '''
-    Creates the default setup for the character-character relationship table
+    Creates the default setup for the character-character relationship table.
     '''
     #character 1, character 2, positive/negative association, short desc
     pass
 
 def create_char_events_table():
     '''
-    Creates the default setup for the character-events relationship table
+    Creates the default setup for the character-events relationship table.
     '''
     # character_id, event_id, involved in, present at?, affected by
     pass
@@ -339,7 +371,7 @@ def create_char_events_table():
 
 def create_char_factions_table():
     '''
-    Creates the default setup for the character-factions/species relationship table
+    Creates the default setup for the character-factions/species relationship table.
     '''
     # character_id, sp/fact_id, "character is" for species, positive association, negative associations
     pass
@@ -347,7 +379,7 @@ def create_char_factions_table():
 
 def create_char_powers_table():
     '''
-    Creates the default setup for the character-powers/magic relationship table
+    Creates the default setup for the character-powers/magic relationship table.
     '''
     # character_id, power_id, "has", details='TEXT'
     pass
@@ -357,7 +389,7 @@ def create_char_powers_table():
 
 def create_events_factions_table():
     '''
-    Creates the default setup for the events-factions/species relationship table
+    Creates the default setup for the events-factions/species relationship table.
     '''
     # event_id, faction_id, caused by, affected by
     pass
@@ -365,7 +397,7 @@ def create_events_factions_table():
 
 def create_events_events_table():
     '''
-    Creates the default setup for the events-events relationship table
+    Creates the default setup for the events-events relationship table.
     '''
     # event_id, event_id, directly related to event
     pass
@@ -373,7 +405,7 @@ def create_events_events_table():
 
 def create_events_locations_table():
     '''
-    Creates the default setup for the events-locations relationship table
+    Creates the default setup for the events-locations relationship table.
     '''
     # event_id, location_id, occurred in location, affected location - maybe 
     # simplify some of these, with just 'involves', the description will explain more
@@ -405,7 +437,55 @@ def create_factions_powers_table():
     pass
 
 
-# Next: Figure out which relationship tables I need
+# For Powers
+
+def create_powers_events_table():
+    '''
+    Creates the default setup for the powers/events relationship table.
+    '''
+    # power id, event id
+    pass
+
+    
+def create_powers_powers_table():
+    '''
+    Creates the default setup for the powers/powers relationship table.
+    '''
+    # which powers are related to other powers, need x power to be available, etc?
+    pass
+
+
+# For Locations
+
+def create_locations_locations_table():
+    '''
+    Creates the default setup for the locations/locations relationship table.
+    '''
+    # parent_location_id, child_location_id (ie, city, building; or, continent, country)
+    pass
+
+
+def create_locations_maps_table():
+    '''
+    Creates the default setup for the locations/maps relationship table.
+    '''
+    # map_of_loc_id, map_id, contains_locs_ids, coords_of_contained_locs, 
+    pass
+
+
+# For Maps
+
+def create_maps_items_table():
+    '''
+    Creates the default table to store map items that are not full locations.
+    '''
+    # map_id, item_id, item type, description
+    pass
+
+# For Images
+
+# make create functions for all image relationships here
+# image_id='INTEGER REFERENCES images(image_id)'
 
 
 

@@ -25,3 +25,14 @@ hopefully I will find a way to script/automate as much of that as possible
 # missing rows (ignore existing rows if mismatch), if table doees not exist 
 # create. Run once on initial setup then write to config not to run again until
 # next update. user can change config to run again.
+
+import dbinterface as dbi
+
+
+# This should be a function, and should include a check to match and update 
+# columns, too
+for table_name,function in dbi.table_names_functions.items():
+    if not dbi.check_for_table(table_name):
+        function()
+    else:
+        print(f'{table_name} already exists')

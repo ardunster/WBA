@@ -43,6 +43,14 @@ otherwise return error.
 
 todo: fix anything that actually takes user input to SQL to prevent injections
 
+todo: setup config/opts to allow user to select "TTRPG" setting, which will enable 
+stat blocks on relevant entries, other possible options?
+
+todo: function to check what columns are in a table
+
+custom columns - label serially, custom_1, custom_2, etc? Where to store the 
+custom name of the custom column?
+
 '''
 
 import psycopg2 as pg2
@@ -65,7 +73,7 @@ def dbi_log(log_input):
             dbi_logfile.write('Log Data: ' + str(log_input) + '\n\n')
     except FileNotFoundError:
         os.makedirs(logpath, exist_ok=True)
-        dbi_log(string)
+        dbi_log(log_input)
     
     
 
@@ -247,7 +255,7 @@ def create_character_table():
     
     create_table('character', character_id='SERIAL PRIMARY KEY',
                  character_name='TEXT NOT NULL', description='TEXT', 
-                 notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', 
+                 notes='TEXT', secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
@@ -266,7 +274,7 @@ def create_events_table():
     create_table('events', event_id='SERIAL PRIMARY KEY',
                  event_headline='TEXT NOT NULL', description='TEXT',
                  year='INTEGER', month='INTEGER', dofm='INTEGER', time='INTEGER',
-                 notes='TEXT', secret='BOOLEAN DEFAULT "FALSE"', 
+                 notes='TEXT', secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
@@ -283,8 +291,8 @@ def create_factions_table():
     
     create_table('factions', faction_id='SERIAL PRIMARY KEY',
                  faction_name='TEXT NOT NULL', description='TEXT',
-                 notes='TEXT', is_species='BOOLEAN DEFAULT "FALSE"', 
-                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 notes='TEXT', is_species='BOOLEAN DEFAULT FALSE', 
+                 secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
@@ -300,7 +308,7 @@ def create_powers_table():
     create_table('powers', power_id='SERIAL PRIMARY KEY',
                  power_name='TEXT NOT NULL', description='TEXT',
                  limits='TEXT', notes='TEXT', 
-                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
@@ -316,7 +324,7 @@ def create_locations_table():
     create_table('locations', location_id='SERIAL PRIMARY KEY',
                  location_name='TEXT NOT NULL', description='TEXT',
                  notes='TEXT', 
-                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
@@ -333,7 +341,7 @@ def create_maps_table():
     create_table('maps', map_id='SERIAL PRIMARY KEY',
                  map_name='TEXT NOT NULL', caption='TEXT',
                  notes='TEXT', 
-                 secret='BOOLEAN DEFAULT "FALSE"', 
+                 secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
@@ -347,6 +355,7 @@ def create_images_table():
     # How to best store image references in PostgreSQL?
     # thumbnail resize stored in DB, full size image (click to view) on hd in 
     # file path, allows user to view images independently of WBA. Does this make sense?
+    # Probably best to store in-DB as I'm planning to let people set up remote hosting DB.
     pass
 
 
@@ -506,7 +515,15 @@ def write_new_char(**kwargs):
 
 
 
-
+table_names_functions = {
+    'character' : create_character_table,
+    'events' : create_events_table,
+    'factions' : create_factions_table,
+    'powers' : create_powers_table,
+    'locations' : create_locations_table,
+    'maps' : create_maps_table,
+    
+    }
 
 
 

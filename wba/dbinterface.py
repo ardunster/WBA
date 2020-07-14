@@ -334,8 +334,8 @@ def create_locations_table():
 def create_maps_table():
     '''
     Creates the default setup for the maps table.
-    map_name will be displayed in selection menu
-    caption will be displayed on map
+    map_name will be displayed in selection menus.
+    caption will be displayed on map.
     '''
     
     create_table('maps', map_id='SERIAL PRIMARY KEY',
@@ -351,12 +351,20 @@ def create_maps_table():
 def create_images_table():
     '''
     Creates the default setup for the images table.
+    image_name will be displayed in selection menus.
+    caption will be displayed under image in inline display situations.
+    notes will be displayed in direct image views.
     '''
-    # How to best store image references in PostgreSQL?
-    # thumbnail resize stored in DB, full size image (click to view) on hd in 
-    # file path, allows user to view images independently of WBA. Does this make sense?
-    # Probably best to store in-DB as I'm planning to let people set up remote hosting DB.
-    pass
+    
+    create_table('images', image_id='SERIAL PRIMARY KEY',
+                 image_name='TEXT NOT NULL', orig_filename='TEXT NOT NULL', 
+                 caption='TEXT', notes='TEXT', 
+                 secret='BOOLEAN DEFAULT FALSE', 
+                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()',
+                 file_data='BYTEA NOT NULL')
+    
+    setup_modified_trigger('images')
 
 
 # Relationship Tables
@@ -486,14 +494,29 @@ def create_locations_maps_table():
 
 def create_maps_items_table():
     '''
-    Creates the default table to store map items that are not full locations.
+    Creates the default setup for map items that are not full locations.
     '''
     # map_id, item_id, item type, description
     pass
 
 # For Images
 
-# make create functions for all image relationships here
+def create_images_relation_table():
+    '''
+    Creates the default setup for the images relationship table.
+    '''
+    
+    create_table('images_relations', 
+                 image_id='INTEGER REFERENCES images(image_id) ON DELETE RESTRICT',
+                 character_id='INTEGER REFERENCES characters ON DELETE CASCADE ON UPDATE CASCADE',
+                 event_id='INTEGER REFERENCES events ON DELETE CASCADE ON UPDATE CASCADE',
+                 faction_id='INTEGER REFERENCES factions ON DELETE CASCADE ON UPDATE CASCADE',
+                 power_id='INTEGER REFERENCES powers ON DELETE CASCADE ON UPDATE CASCADE',
+                 location_id='INTEGER REFERENCES locations ON DELETE CASCADE ON UPDATE CASCADE',
+                 map_id='INTEGER REFERENCES maps ON DELETE CASCADE ON UPDATE CASCADE',
+                 )
+    
+
 # image_id='INTEGER REFERENCES images(image_id)'
 
 
@@ -522,7 +545,8 @@ table_names_functions = {
     'powers' : create_powers_table,
     'locations' : create_locations_table,
     'maps' : create_maps_table,
-    
+    'images' : create_images_table,
+    'images_relations' : create_images_relation_table
     }
 
 

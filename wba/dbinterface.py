@@ -247,19 +247,19 @@ def fetch_from_table(table_name):
 
 # Primary Tables
 
-def create_character_table():
+def create_characters_table():
     '''
     Creates the default setup for the character information table.
     character_name will be displayed in selection menus.
     '''
     
-    create_table('character', character_id='SERIAL PRIMARY KEY',
+    create_table('characters', character_id='SERIAL PRIMARY KEY',
                  character_name='TEXT NOT NULL', description='TEXT', 
                  notes='TEXT', secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
     
-    setup_modified_trigger('character')
+    setup_modified_trigger('characters')
 
 
 def create_events_table():
@@ -362,6 +362,7 @@ def create_images_table():
                  secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
                  modified='TIMESTAMPTZ NOT NULL DEFAULT Now()',
+                 thumbnail='BYTEA NOT NULL',
                  file_data='BYTEA NOT NULL')
     
     setup_modified_trigger('images')
@@ -375,8 +376,11 @@ def create_char_char_table():
     '''
     Creates the default setup for the character-character relationship table.
     '''
-    #character 1, character 2, positive/negative association, short desc
-    pass
+    create_table('character_relations', 
+                 primary_character_id='INTEGER REFERENCES characters ON DELETE RESTRICT',
+                 secondary_character_id='INTEGER REFERENCES characters ON DELETE RESTRICT',
+                 relationship='TEXT NOT NULL')
+
 
 def create_char_events_table():
     '''
@@ -539,14 +543,17 @@ def write_new_char(**kwargs):
 
 
 table_names_functions = {
-    'character' : create_character_table,
+    'characters' : create_characters_table,
     'events' : create_events_table,
     'factions' : create_factions_table,
     'powers' : create_powers_table,
     'locations' : create_locations_table,
     'maps' : create_maps_table,
     'images' : create_images_table,
-    'images_relations' : create_images_relation_table
+    'images_relations' : create_images_relation_table,
+    'character_relations' : create_char_char_table,
+    
+    
     }
 
 

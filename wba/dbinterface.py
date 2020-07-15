@@ -377,8 +377,8 @@ def create_char_char_table():
     Creates the default setup for the character-character relationship table.
     '''
     create_table('character_relations', 
-                 primary_character_id='INTEGER REFERENCES characters ON DELETE RESTRICT',
-                 secondary_character_id='INTEGER REFERENCES characters ON DELETE RESTRICT',
+                 primary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+                 secondary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  relationship='TEXT NOT NULL')
 
 
@@ -386,16 +386,22 @@ def create_char_events_table():
     '''
     Creates the default setup for the character-events relationship table.
     '''
-    # character_id, event_id, involved in, present at?, affected by
-    pass
+    create_table('character_event_relations', 
+                 character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+                 event_id='INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+                 relationship='TEXT NOT NULL')
 
 
 def create_char_factions_table():
     '''
     Creates the default setup for the character-factions/species relationship table.
+    character_is_species is used in reference to this specific relationship and will apply 
+    the selection to a specific field in character view. 
     '''
-    # character_id, sp/fact_id, "character is" for species, positive association, negative associations
-    pass
+    create_table('character_faction_relations', 
+                 character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+                 faction_id='INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+                 relationship='TEXT NOT NULL', character_is_species='BOOLEAN DEFAULT FALSE')
 
 
 def create_char_powers_table():
@@ -552,6 +558,7 @@ table_names_functions = {
     'images' : create_images_table,
     'images_relations' : create_images_relation_table,
     'character_relations' : create_char_char_table,
+    'character_event_relations' : create_char_events_table,
     
     
     }

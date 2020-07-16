@@ -29,10 +29,22 @@ hopefully I will find a way to script/automate as much of that as possible
 import dbinterface as dbi
 
 
-# This should be a function, and should include a check to match and update 
-# columns, too
-for table_name,function in dbi.table_names_functions.items():
-    if not dbi.check_for_table(table_name):
-        function()
-    else:
-        print(f'{table_name} already exists')
+def create_all_tables():
+    '''
+    Runs create functions from dbi to create any tables that do not already 
+    exist. Requires accurate dictionary of table names and functions to create
+    them, where key is string of table name and value is the function to run
+    to create that table.
+    '''
+    for table_name,function in dbi.table_names_functions.items():
+        if not dbi.check_for_table(table_name):
+            function()
+        else:
+            print(f'{table_name} already exists')
+            
+
+
+if __name__ == '__main__':
+    create_all_tables()
+    
+    

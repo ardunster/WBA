@@ -375,44 +375,68 @@ def create_images_table():
 def create_char_char_table():
     '''
     Creates the default setup for the character-character relationship table.
+    relationship_from_pc will be displayed in connections on the primary 
+    character view
+    relationship_from_sc will be displayed in connections on the secondary 
+    character view
     '''
     create_table('character_relations', 
                  primary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  secondary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-                 relationship='TEXT NOT NULL')
+                 relationship_from_pc='TEXT NOT NULL DEFAULT \'Relationship\'', 
+                 relationship_from_sc='TEXT NOT NULL DEFAULT \'Relationship\'')
 
 
 def create_char_events_table():
     '''
     Creates the default setup for the character-events relationship table.
+    relationship_from_c will be displayed in connections on the character view
+    relationship_from_e will be displayed in connections on the event view
     '''
     create_table('character_event_relations', 
                  character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  event_id='INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
-                 relationship='TEXT NOT NULL')
+                 relationship_from_c='TEXT NOT NULL DEFAULT \'Relationship\'', 
+                 relationship_from_e='TEXT NOT NULL DEFAULT \'Relationship\'')
 
 
 def create_char_factions_table():
     '''
     Creates the default setup for the character-factions/species relationship table.
+    relationship_from_c will be displayed in connections on the character view
+    relationship_from_f will be displayed in connections on the faction view
     character_is_species is used in reference to this specific relationship and will apply 
     the selection to a specific field in character view. 
     '''
     create_table('character_faction_relations', 
                  character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  faction_id='INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
-                 relationship='TEXT NOT NULL', character_is_species='BOOLEAN DEFAULT FALSE')
+                 relationship_from_c='TEXT NOT NULL DEFAULT \'Relationship\'', 
+                 relationship_from_f='TEXT NOT NULL DEFAULT \'Relationship\'',
+                 character_is_species='BOOLEAN DEFAULT FALSE')
 
 
 def create_char_powers_table():
     '''
     Creates the default setup for the character-powers/magic relationship table.
+    relationship_from_c will be displayed in connections on the character view
+    relationship_from_p will be displayed in connections on the event view
+    details will be displayed on the character view
     '''
     create_table('character_power_relations', 
                  character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  power_id='INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
-                 relationship='TEXT NOT NULL', details='TEXT')
+                 relationship_from_c='TEXT NOT NULL DEFAULT \'Relationship\'', 
+                 relationship_from_p='TEXT NOT NULL DEFAULT \'Relationship\'', 
+                 details='TEXT')
 
+
+def create_character_locations_table():
+    '''
+    Creates the default setup for the character-location relationship table.
+    '''
+    # character id, location id, nature of relationship
+    pass
 
 # For Events
 

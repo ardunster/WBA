@@ -262,7 +262,8 @@ def create_characters_table():
                  character_name='TEXT NOT NULL', description='TEXT', 
                  notes='TEXT', secret='BOOLEAN DEFAULT FALSE', 
                  created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
+                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()',
+                 custom_fields='JSONB')
     
     setup_modified_trigger('characters')
 

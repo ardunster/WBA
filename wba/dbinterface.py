@@ -49,7 +49,12 @@ stat blocks on relevant entries, other possible options?
 todo: function to check what columns are in a table
 
 custom columns - label serially, custom_1, custom_2, etc? Where to store the 
-custom name of the custom column?
+custom name of the custom column? -> JSON
+
+todo: setup a table specifically for storing any config files other than pgs_config
+remotely, so interface can be consistent and any custom settings, columsn, etc
+can be retained.   Do I actually need to write config to disk in this case? 
+Store both ways and export with data export?
 
 '''
 

@@ -56,6 +56,10 @@ remotely, so interface can be consistent and any custom settings, columsn, etc
 can be retained.   Do I actually need to write config to disk in this case? 
 Store both ways and export with data export?
 
+today's todo: code a new create table function that will take a dictionary input
+instead of kwarg input to simplify designing new tables and separate concerns,
+also to practice proper use of inputs to sql such as identifiers, etc.
+
 '''
 
 import psycopg2 as pg2
@@ -173,6 +177,13 @@ def create_table(table_name, **kwargs):
 
     conn.close()
 
+def create_table_dict(table_name, columns):
+    '''
+    Creates a table in the WBA database using a table name and a dictionary 
+    where key is column name and value is column type and constraints.
+    '''
+    
+    
 
 def setup_modified_function():
     '''

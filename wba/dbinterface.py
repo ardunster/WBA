@@ -480,6 +480,7 @@ def create_character_locations_table():
     relationship_from_l will be displayed in connections on the location view
     is_homeland determines display in specific location on character view
     """
+    
     character_location_relations = {
         'character_id' : 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
         'location_id' : 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
@@ -487,16 +488,18 @@ def create_character_locations_table():
         'relationship_from_l' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
         'is_homeland' : 'BOOLEAN NOT NULL DEFAULT False'
         }
+    
     create_table_dict('character_location_relations', character_location_relations)
 
 # For Events
 
-def create_events_factions_table():
+def create_events_factions_table(table_name, columns):
     """
     Create the default setup for the events-factions/species relationship table.
     """
-    # event_id, faction_id, caused by, affected by
-    pass
+
+    create_table_dict(table_name, columns)
+    
 
 
 def create_events_events_table():
@@ -641,6 +644,20 @@ table_names_functions = {
     'character_location_relations' : create_character_locations_table,
     
     }
+
+
+table_names_func_column = {
+    'event_faction_relations' : (create_events_factions_table, {
+        'event_id' : 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'faction_id' : 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'relationship_from_e' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_f' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        })
+    
+    }
+
+
+
 
 
 

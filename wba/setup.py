@@ -30,12 +30,12 @@ import dbinterface as dbi
 
 
 def create_all_tables():
-    '''
-    Runs create functions from dbi to create any tables that do not already 
+    """
+    Run create functions from dbi to create any tables that do not already 
     exist. Requires accurate dictionary of table names and functions to create
     them, where key is string of table name and value is the function to run
     to create that table.
-    '''
+    """
     for table_name,function in dbi.table_names_functions.items():
         if not dbi.check_for_table(table_name):
             function()
@@ -43,8 +43,20 @@ def create_all_tables():
             print(f'{table_name} already exists')
             
 
+def create_all_tablesb():
+    """
+    Run create functions from dbi to create any tables that do not already 
+    exist. Requires accurate dictionary of table names and functions to create
+    them, where key is string of table name and value is the function to run
+    to create that table.
+    """
+    for table_name,function in dbi.table_names_func_column.items():
+        if not dbi.check_for_table(table_name):
+            function[0](table_name, function[1])
+        else:
+            print(f'{table_name} already exists')
 
 if __name__ == '__main__':
     create_all_tables()
-    
+    create_all_tablesb()
     

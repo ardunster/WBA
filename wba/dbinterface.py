@@ -58,7 +58,8 @@ Store both ways and export with data export?
 
 today's todo: code a new create table function that will take a dictionary input
 instead of kwarg input to simplify designing new tables and separate concerns,
-also to practice proper use of inputs to sql such as identifiers, etc.
+also to practice proper use of inputs to sql such as identifiers, etc., also to 
+facilitate comparison of columns to database in case of updates, and so on.
 
 '''
 
@@ -73,9 +74,9 @@ logpath = os.path.join('logs', '')
 
 
 def dbi_log(log_input):
-    '''
+    """
     Can be called any time data needs to be logged. Writes to file.
-    '''
+    """
     try:
         with open(logpath + 'dbi_logs.log', 'a') as dbi_logfile:
             dbi_logfile.write('Log Time: ' + str(datetime.datetime.now()) + '\n')
@@ -87,9 +88,9 @@ def dbi_log(log_input):
     
 
 def write_pgs_config(hostname='localhost',port='5432',username='wba_login',password='wba_password',dbname='wba_default'):
-    '''
+    """
     Writes PostgreSQL config file based on variables passed.
-    '''
+    """
     config['PostgreSQL'] = {'hostname':hostname,
                             'port':port,
                             'username':username,
@@ -105,9 +106,9 @@ def write_pgs_config(hostname='localhost',port='5432',username='wba_login',passw
 
 
 def get_pgs_config():
-    '''
+    """
     Fetches and returns the PostgreSQL config from file.
-    '''
+    """
     try:
         config.read(configpath + 'pgs_config.ini')
         hostname = config['PostgreSQL']['hostname']
@@ -123,9 +124,9 @@ def get_pgs_config():
 
 
 def conn_wba(hostname,port,username,password,dbname):
-    '''
+    """
     Builds a connection to the PostgreSQL server
-    '''
+    """
     try:
         conn = pg2.connect(f'dbname={dbname} user={username} password={password} host={hostname} port={port}')
     except Exception as e:
@@ -136,11 +137,11 @@ def conn_wba(hostname,port,username,password,dbname):
 
 
 def check_for_table(table_name):
-    '''
+    """
     Input: conn_cur = psycopg2 connection cursor object, tablename = string of name of table to look for.
     Connects to PostgreSQL and looks for provided table name.
     Returns: True or False
-    '''
+    """
     conn = conn_wba(*get_pgs_config())
     select_from = 'SELECT * FROM ' + table_name + ';'
     try:
@@ -158,13 +159,13 @@ def check_for_table(table_name):
 
 
 def create_table(table_name, **kwargs):
-    '''
+    """
     Creates a table in the WBA database. 
     **kwargs: name_of_column='TYPE column constraints'
     
     Ex:
     create_table('test_table', test_id='SERIAL PRIMARY KEY', name='VARCHAR (25) NOT NULL', created_on='TIMESTAMPTZ')
-    '''
+    """
     conn = conn_wba(*get_pgs_config())
     create = f'''CREATE TABLE {table_name} ('''
     for key in kwargs:
@@ -178,17 +179,29 @@ def create_table(table_name, **kwargs):
     conn.close()
 
 def create_table_dict(table_name, columns):
-    '''
-    Creates a table in the WBA database using a table name and a dictionary 
-    where key is column name and value is column type and constraints.
-    '''
+    """
+    Create a table in the WBA database.
     
+    table_name as string
+    columns as dictionary (key = column name,  value = column type, constraints.)
+    """
+    conn = conn_wba(*get_pgs_config())
+    create = f'''CREATE TABLE {table_name} ('''
+    for column,value in columns.items():
+        create += f'''{column} {value}, '''
+    create = create[:-2]
+    create +=''');'''
+    
+    conn.cursor().execute(create)
+    conn.commit()
+
+    conn.close()
     
 
 def setup_modified_function():
-    '''
+    """
     Creates the function update_modified_function() in PostgreSQL to update last modified columns
-    '''
+    """
     conn = conn_wba(*get_pgs_config())
     
     function = '''CREATE OR REPLACE FUNCTION update_modified_function()
@@ -209,9 +222,9 @@ def setup_modified_function():
 
 
 def setup_modified_trigger(table_name):
-    '''
+    """
     Sets up trigger for modified column function in specified table name
-    '''
+    """
     conn = conn_wba(*get_pgs_config())
     
     trigger = f'''CREATE TRIGGER set_modified
@@ -227,9 +240,9 @@ def setup_modified_trigger(table_name):
     
 
 def write_new_to_table(table_name, **kwargs):
-    '''
+    """
     Writes a single new entry to specified table
-    '''
+    """
     # TODO: needs rewrite to prevent SQL injection/input bugs
     conn = conn_wba(*get_pgs_config())
     
@@ -250,9 +263,9 @@ def write_new_to_table(table_name, **kwargs):
 
 
 def fetch_from_table(table_name):
-    '''
+    """
     Retrieves information from table, returns ?
-    '''
+    """
     pass
 
 
@@ -264,10 +277,11 @@ def fetch_from_table(table_name):
 # Primary Tables
 
 def create_characters_table():
-    '''
-    Creates the default setup for the character information table.
+    """
+    Create the default setup for the character information table.
+    
     character_name will be displayed in selection menus.
-    '''
+    """
     
     create_table('characters', character_id='SERIAL PRIMARY KEY',
                  character_name='TEXT NOT NULL', description='TEXT', 
@@ -280,13 +294,14 @@ def create_characters_table():
 
 
 def create_events_table():
-    '''
-    Creates the default setup for the events information table. 
+    """
+    Create the default setup for the events information table. 
+    
     event_headline will be displayed in selection menus.
     Year, Month, Day of Month, Time will be used to generate position in Timeline.
     They are all integers, because they are referring to possibly fictitious 
     date/time information that may not work with a normal datetime format. 
-    '''
+    """
     
     create_table('events', event_id='SERIAL PRIMARY KEY',
                  event_headline='TEXT NOT NULL', description='TEXT',
@@ -299,12 +314,13 @@ def create_events_table():
 
 
 def create_factions_table():
-    '''
-    Creates the default setup for the factions and species table.
+    """
+    Create the default setup for the factions and species table.
+    
     faction_name will be displayed in selection menus.
     is_species is used to determine whether entry appears in faction selections
     (False) or in species selections (True).
-    '''
+    """
     
     create_table('factions', faction_id='SERIAL PRIMARY KEY',
                  faction_name='TEXT NOT NULL', description='TEXT',
@@ -317,10 +333,11 @@ def create_factions_table():
 
 
 def create_powers_table():
-    '''
-    Creates the default setup for the magic and powers table.
+    """
+    Create the default setup for the magic and powers table.
+    
     power_name will be displayed in selection menus.
-    '''
+    """
     
     create_table('powers', power_id='SERIAL PRIMARY KEY',
                  power_name='TEXT NOT NULL', description='TEXT',
@@ -333,10 +350,11 @@ def create_powers_table():
 
 
 def create_locations_table():
-    '''
-    Creates the default setup for the locations table.
+    """
+    Create the default setup for the locations table.
+    
     location_name will be displayed in selection menus.
-    '''
+    """
     
     create_table('locations', location_id='SERIAL PRIMARY KEY',
                  location_name='TEXT NOT NULL', description='TEXT',
@@ -349,11 +367,12 @@ def create_locations_table():
 
 
 def create_maps_table():
-    '''
-    Creates the default setup for the maps table.
+    """
+    Create the default setup for the maps table.
+    
     map_name will be displayed in selection menus.
     caption will be displayed on map.
-    '''
+    """
     
     create_table('maps', map_id='SERIAL PRIMARY KEY',
                  map_name='TEXT NOT NULL', caption='TEXT',
@@ -366,12 +385,13 @@ def create_maps_table():
 
 
 def create_images_table():
-    '''
-    Creates the default setup for the images table.
+    """
+    Create the default setup for the images table.
+    
     image_name will be displayed in selection menus.
     caption will be displayed under image in inline display situations.
     notes will be displayed in direct image views.
-    '''
+    """
     
     create_table('images', image_id='SERIAL PRIMARY KEY',
                  image_name='TEXT NOT NULL', orig_filename='TEXT NOT NULL', 
@@ -390,13 +410,14 @@ def create_images_table():
 # For Characters
 
 def create_char_char_table():
-    '''
-    Creates the default setup for the character-character relationship table.
+    """
+    Create the default setup for the character-character relationship table.
+    
     relationship_from_pc will be displayed in connections on the primary 
     character view
     relationship_from_sc will be displayed in connections on the secondary 
     character view
-    '''
+    """
     create_table('character_relations', 
                  primary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  secondary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
@@ -405,11 +426,12 @@ def create_char_char_table():
 
 
 def create_char_events_table():
-    '''
-    Creates the default setup for the character-events relationship table.
+    """
+    Create the default setup for the character-events relationship table.
+    
     relationship_from_c will be displayed in connections on the character view
     relationship_from_e will be displayed in connections on the event view
-    '''
+    """
     create_table('character_event_relations', 
                  character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  event_id='INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
@@ -418,13 +440,14 @@ def create_char_events_table():
 
 
 def create_char_factions_table():
-    '''
-    Creates the default setup for the character-factions/species relationship table.
+    """
+    Create the default setup for the character-factions/species relationship table.
+    
     relationship_from_c will be displayed in connections on the character view
     relationship_from_f will be displayed in connections on the faction view
     character_is_species is used in reference to this specific relationship and will apply 
     the selection to a specific field in character view. 
-    '''
+    """
     create_table('character_faction_relations', 
                  character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  faction_id='INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
@@ -434,12 +457,13 @@ def create_char_factions_table():
 
 
 def create_char_powers_table():
-    '''
-    Creates the default setup for the character-powers/magic relationship table.
+    """
+    Create the default setup for the character-powers/magic relationship table.
+    
     relationship_from_c will be displayed in connections on the character view
     relationship_from_p will be displayed in connections on the event view
     details will be displayed on the character view
-    '''
+    """
     create_table('character_power_relations', 
                  character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
                  power_id='INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
@@ -449,34 +473,44 @@ def create_char_powers_table():
 
 
 def create_character_locations_table():
-    '''
-    Creates the default setup for the character-location relationship table.
-    '''
-    # character id, location id, nature of relationship
-    pass
+    """
+    Create the default setup for the character-location relationship table.
+    
+    relationship_from_c will be displayed in connections on the character view
+    relationship_from_l will be displayed in connections on the location view
+    is_homeland determines display in specific location on character view
+    """
+    character_location_relations = {
+        'character_id' : 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'location_id' : 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'relationship_from_c' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_l' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'is_homeland' : 'BOOLEAN NOT NULL DEFAULT False'
+        }
+    create_table_dict('character_location_relations', character_location_relations)
 
 # For Events
 
 def create_events_factions_table():
-    '''
-    Creates the default setup for the events-factions/species relationship table.
-    '''
+    """
+    Create the default setup for the events-factions/species relationship table.
+    """
     # event_id, faction_id, caused by, affected by
     pass
 
 
 def create_events_events_table():
-    '''
-    Creates the default setup for the events-events relationship table.
-    '''
+    """
+    Create the default setup for the events-events relationship table.
+    """
     # event_id, event_id, directly related to event
     pass
 
 
 def create_events_locations_table():
-    '''
-    Creates the default setup for the events-locations relationship table.
-    '''
+    """
+    Create the default setup for the events-locations relationship table.
+    """
     # event_id, location_id, occurred in location, affected location - maybe 
     # simplify some of these, with just 'involves', the description will explain more
     pass
@@ -485,24 +519,24 @@ def create_events_locations_table():
 # For Factions
 
 def create_factions_factions_table():
-    '''
-    Creates the default setup for the factions-factions relationship table.
-    '''
+    """
+    Create the default setup for the factions-factions relationship table.
+    """
     # faction_id, faction_id, positive/negative association, notes? Type of relation?
     pass
 
 def create_factions_locations_table():
-    '''
-    Creates the default setup for the factions/locations relationship table.
-    '''
+    """
+    Create the default setup for the factions/locations relationship table.
+    """
     # faction_id, location_id, homeland, type of relation?
     pass
 
 
 def create_factions_powers_table():
-    '''
-    Creates the default setup for the factions/powers relationship table.
-    '''
+    """
+    Create the default setup for the factions/powers relationship table.
+    """
     # faction id, power_id, can have, prevented from having
     pass
 
@@ -510,17 +544,17 @@ def create_factions_powers_table():
 # For Powers
 
 def create_powers_events_table():
-    '''
-    Creates the default setup for the powers/events relationship table.
-    '''
+    """
+    Create the default setup for the powers/events relationship table.
+    """
     # power id, event id
     pass
 
     
 def create_powers_powers_table():
-    '''
-    Creates the default setup for the powers/powers relationship table.
-    '''
+    """
+    Create the default setup for the powers/powers relationship table.
+    """
     # which powers are related to other powers, need x power to be available, etc?
     pass
 
@@ -528,17 +562,17 @@ def create_powers_powers_table():
 # For Locations
 
 def create_locations_locations_table():
-    '''
-    Creates the default setup for the locations/locations relationship table.
-    '''
+    """
+    Create the default setup for the locations/locations relationship table.
+    """
     # parent_location_id, child_location_id (ie, city, building; or, continent, country)
     pass
 
 
 def create_locations_maps_table():
-    '''
-    Creates the default setup for the locations/maps relationship table.
-    '''
+    """
+    Create the default setup for the locations/maps relationship table.
+    """
     # map_of_loc_id, map_id, contains_locs_ids, coords_of_contained_locs, 
     pass
 
@@ -546,18 +580,18 @@ def create_locations_maps_table():
 # For Maps
 
 def create_maps_items_table():
-    '''
-    Creates the default setup for map items that are not full locations.
-    '''
+    """
+    Create the default setup for map items that are not full locations.
+    """
     # map_id, item_id, item type, description
     pass
 
 # For Images
 
 def create_images_relation_table():
-    '''
-    Creates the default setup for the images relationship table.
-    '''
+    """
+    Create the default setup for the images relationship table.
+    """
     
     create_table('images_relations', 
                  image_id='INTEGER REFERENCES images(image_id) ON DELETE RESTRICT',
@@ -576,9 +610,9 @@ def create_images_relation_table():
 
 
 def write_new_char(**kwargs):
-    '''
-    Writes a new entry in character table
-    '''
+    """
+    Write a new entry in character table
+    """
     
     write_new_to_table('character', **kwargs)
     
@@ -604,6 +638,7 @@ table_names_functions = {
     'character_event_relations' : create_char_events_table,
     'character_faction_relations' : create_char_factions_table,
     'character_power_relations' : create_char_powers_table,
+    'character_location_relations' : create_character_locations_table,
     
     }
 

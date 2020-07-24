@@ -158,27 +158,7 @@ def check_for_table(table_name):
         conn.close()
 
 
-def create_table(table_name, **kwargs):
-    """
-    Creates a table in the WBA database. 
-    **kwargs: name_of_column='TYPE column constraints'
-    
-    Ex:
-    create_table('test_table', test_id='SERIAL PRIMARY KEY', name='VARCHAR (25) NOT NULL', created_on='TIMESTAMPTZ')
-    """
-    conn = conn_wba(*get_pgs_config())
-    create = f'''CREATE TABLE {table_name} ('''
-    for key in kwargs:
-        create += f'''{key} {kwargs[key]}, '''
-    create = create[:-2]
-    create +=''');'''
-    
-    conn.cursor().execute(create)
-    conn.commit()
-
-    conn.close()
-
-def create_table_dict(table_name, columns):
+def create_table(table_name, columns):
     """
     Create a table in the WBA database.
     
@@ -239,6 +219,18 @@ def setup_modified_trigger(table_name):
     conn.close()
     
 
+def create_table_mod_trigger(table_name, columns):
+    """
+    Create the default setup for tables using the date modified trigger.
+    
+    table_name as string
+    columns as dictionary
+    """
+    
+    create_table(table_name, columns)
+    setup_modified_trigger(table_name)
+    
+
 def write_new_to_table(table_name, **kwargs):
     """
     Writes a single new entry to specified table
@@ -270,348 +262,6 @@ def fetch_from_table(table_name):
 
 
 
-
-
-# Specific Tables: Create Default Setup
-
-# Primary Tables
-
-def create_characters_table():
-    """
-    Create the default setup for the character information table.
-    
-    character_name will be displayed in selection menus.
-    """
-    
-    create_table('characters', character_id='SERIAL PRIMARY KEY',
-                 character_name='TEXT NOT NULL', description='TEXT', 
-                 notes='TEXT', secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()',
-                 custom_fields='JSONB')
-    
-    setup_modified_trigger('characters')
-
-
-def create_events_table():
-    """
-    Create the default setup for the events information table. 
-    
-    event_headline will be displayed in selection menus.
-    Year, Month, Day of Month, Time will be used to generate position in Timeline.
-    They are all integers, because they are referring to possibly fictitious 
-    date/time information that may not work with a normal datetime format. 
-    """
-    
-    create_table('events', event_id='SERIAL PRIMARY KEY',
-                 event_headline='TEXT NOT NULL', description='TEXT',
-                 year='INTEGER', month='INTEGER', dofm='INTEGER', time='INTEGER',
-                 notes='TEXT', secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
-    
-    setup_modified_trigger('events')
-
-
-def create_factions_table():
-    """
-    Create the default setup for the factions and species table.
-    
-    faction_name will be displayed in selection menus.
-    is_species is used to determine whether entry appears in faction selections
-    (False) or in species selections (True).
-    """
-    
-    create_table('factions', faction_id='SERIAL PRIMARY KEY',
-                 faction_name='TEXT NOT NULL', description='TEXT',
-                 notes='TEXT', is_species='BOOLEAN DEFAULT FALSE', 
-                 secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
-    
-    setup_modified_trigger('factions')
-
-
-def create_powers_table():
-    """
-    Create the default setup for the magic and powers table.
-    
-    power_name will be displayed in selection menus.
-    """
-    
-    create_table('powers', power_id='SERIAL PRIMARY KEY',
-                 power_name='TEXT NOT NULL', description='TEXT',
-                 limits='TEXT', notes='TEXT', 
-                 secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
-    
-    setup_modified_trigger('powers')
-
-
-def create_locations_table():
-    """
-    Create the default setup for the locations table.
-    
-    location_name will be displayed in selection menus.
-    """
-    
-    create_table('locations', location_id='SERIAL PRIMARY KEY',
-                 location_name='TEXT NOT NULL', description='TEXT',
-                 notes='TEXT', 
-                 secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
-    
-    setup_modified_trigger('locations')
-
-
-def create_maps_table():
-    """
-    Create the default setup for the maps table.
-    
-    map_name will be displayed in selection menus.
-    caption will be displayed on map.
-    """
-    
-    create_table('maps', map_id='SERIAL PRIMARY KEY',
-                 map_name='TEXT NOT NULL', caption='TEXT',
-                 notes='TEXT', 
-                 secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()')
-    
-    setup_modified_trigger('maps')
-
-
-def create_images_table():
-    """
-    Create the default setup for the images table.
-    
-    image_name will be displayed in selection menus.
-    caption will be displayed under image in inline display situations.
-    notes will be displayed in direct image views.
-    """
-    
-    create_table('images', image_id='SERIAL PRIMARY KEY',
-                 image_name='TEXT NOT NULL', orig_filename='TEXT NOT NULL', 
-                 caption='TEXT', notes='TEXT', 
-                 secret='BOOLEAN DEFAULT FALSE', 
-                 created='TIMESTAMPTZ NOT NULL DEFAULT Now()', 
-                 modified='TIMESTAMPTZ NOT NULL DEFAULT Now()',
-                 thumbnail='BYTEA NOT NULL',
-                 file_data='BYTEA NOT NULL')
-    
-    setup_modified_trigger('images')
-
-
-# Relationship Tables
-
-# For Characters
-
-def create_char_char_table():
-    """
-    Create the default setup for the character-character relationship table.
-    
-    relationship_from_pc will be displayed in connections on the primary 
-    character view
-    relationship_from_sc will be displayed in connections on the secondary 
-    character view
-    """
-    create_table('character_relations', 
-                 primary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-                 secondary_character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-                 relationship_from_pc='TEXT NOT NULL DEFAULT \'Relationship\'', 
-                 relationship_from_sc='TEXT NOT NULL DEFAULT \'Relationship\'')
-
-
-def create_char_events_table():
-    """
-    Create the default setup for the character-events relationship table.
-    
-    relationship_from_c will be displayed in connections on the character view
-    relationship_from_e will be displayed in connections on the event view
-    """
-    create_table('character_event_relations', 
-                 character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-                 event_id='INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
-                 relationship_from_c='TEXT NOT NULL DEFAULT \'Relationship\'', 
-                 relationship_from_e='TEXT NOT NULL DEFAULT \'Relationship\'')
-
-
-def create_char_factions_table():
-    """
-    Create the default setup for the character-factions/species relationship table.
-    
-    relationship_from_c will be displayed in connections on the character view
-    relationship_from_f will be displayed in connections on the faction view
-    character_is_species is used in reference to this specific relationship and will apply 
-    the selection to a specific field in character view. 
-    """
-    create_table('character_faction_relations', 
-                 character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-                 faction_id='INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
-                 relationship_from_c='TEXT NOT NULL DEFAULT \'Relationship\'', 
-                 relationship_from_f='TEXT NOT NULL DEFAULT \'Relationship\'',
-                 character_is_species='BOOLEAN DEFAULT FALSE')
-
-
-def create_char_powers_table():
-    """
-    Create the default setup for the character-powers/magic relationship table.
-    
-    relationship_from_c will be displayed in connections on the character view
-    relationship_from_p will be displayed in connections on the event view
-    details will be displayed on the character view
-    """
-    create_table('character_power_relations', 
-                 character_id='INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-                 power_id='INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
-                 relationship_from_c='TEXT NOT NULL DEFAULT \'Relationship\'', 
-                 relationship_from_p='TEXT NOT NULL DEFAULT \'Relationship\'', 
-                 details='TEXT')
-
-
-def create_character_locations_table():
-    """
-    Create the default setup for the character-location relationship table.
-    
-    relationship_from_c will be displayed in connections on the character view
-    relationship_from_l will be displayed in connections on the location view
-    is_homeland determines display in specific location on character view
-    """
-    
-    character_location_relations = {
-        'character_id' : 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
-        'location_id' : 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
-        'relationship_from_c' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
-        'relationship_from_l' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
-        'is_homeland' : 'BOOLEAN NOT NULL DEFAULT False'
-        }
-    
-    create_table_dict('character_location_relations', character_location_relations)
-
-# For Events
-
-def create_events_factions_table(table_name, columns):
-    """
-    Create the default setup for the events-factions/species relationship table.
-    """
-
-    create_table_dict(table_name, columns)
-    
-
-
-def create_events_events_table():
-    """
-    Create the default setup for the events-events relationship table.
-    """
-    # event_id, event_id, directly related to event
-    pass
-
-
-def create_events_locations_table():
-    """
-    Create the default setup for the events-locations relationship table.
-    """
-    # event_id, location_id, occurred in location, affected location - maybe 
-    # simplify some of these, with just 'involves', the description will explain more
-    pass
-
-
-# For Factions
-
-def create_factions_factions_table():
-    """
-    Create the default setup for the factions-factions relationship table.
-    """
-    # faction_id, faction_id, positive/negative association, notes? Type of relation?
-    pass
-
-def create_factions_locations_table():
-    """
-    Create the default setup for the factions/locations relationship table.
-    """
-    # faction_id, location_id, homeland, type of relation?
-    pass
-
-
-def create_factions_powers_table():
-    """
-    Create the default setup for the factions/powers relationship table.
-    """
-    # faction id, power_id, can have, prevented from having
-    pass
-
-
-# For Powers
-
-def create_powers_events_table():
-    """
-    Create the default setup for the powers/events relationship table.
-    """
-    # power id, event id
-    pass
-
-    
-def create_powers_powers_table():
-    """
-    Create the default setup for the powers/powers relationship table.
-    """
-    # which powers are related to other powers, need x power to be available, etc?
-    pass
-
-
-# For Locations
-
-def create_locations_locations_table():
-    """
-    Create the default setup for the locations/locations relationship table.
-    """
-    # parent_location_id, child_location_id (ie, city, building; or, continent, country)
-    pass
-
-
-def create_locations_maps_table():
-    """
-    Create the default setup for the locations/maps relationship table.
-    """
-    # map_of_loc_id, map_id, contains_locs_ids, coords_of_contained_locs, 
-    pass
-
-
-# For Maps
-
-def create_maps_items_table():
-    """
-    Create the default setup for map items that are not full locations.
-    """
-    # map_id, item_id, item type, description
-    pass
-
-# For Images
-
-def create_images_relation_table():
-    """
-    Create the default setup for the images relationship table.
-    """
-    
-    create_table('images_relations', 
-                 image_id='INTEGER REFERENCES images(image_id) ON DELETE RESTRICT',
-                 character_id='INTEGER REFERENCES characters ON DELETE CASCADE ON UPDATE CASCADE',
-                 event_id='INTEGER REFERENCES events ON DELETE CASCADE ON UPDATE CASCADE',
-                 faction_id='INTEGER REFERENCES factions ON DELETE CASCADE ON UPDATE CASCADE',
-                 power_id='INTEGER REFERENCES powers ON DELETE CASCADE ON UPDATE CASCADE',
-                 location_id='INTEGER REFERENCES locations ON DELETE CASCADE ON UPDATE CASCADE',
-                 map_id='INTEGER REFERENCES maps ON DELETE CASCADE ON UPDATE CASCADE',
-                 )
-    
-
-# image_id='INTEGER REFERENCES images(image_id)'
-
-
-
-
 def write_new_char(**kwargs):
     """
     Write a new entry in character table
@@ -628,36 +278,255 @@ def write_new_char(**kwargs):
 
 
 
+
 table_names_functions = {
-    'characters' : create_characters_table,
-    'events' : create_events_table,
-    'factions' : create_factions_table,
-    'powers' : create_powers_table,
-    'locations' : create_locations_table,
-    'maps' : create_maps_table,
-    'images' : create_images_table,
-    'images_relations' : create_images_relation_table,
-    'character_relations' : create_char_char_table,
-    'character_event_relations' : create_char_events_table,
-    'character_faction_relations' : create_char_factions_table,
-    'character_power_relations' : create_char_powers_table,
-    'character_location_relations' : create_character_locations_table,
+    'characters': (create_table_mod_trigger, {
+        'character_id': 'SERIAL PRIMARY KEY',
+        'character_name': 'TEXT NOT NULL', 
+        'description': 'TEXT', 
+        'notes': 'TEXT', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'custom_fields': 'JSONB'
+        }),
+    'events': (create_table_mod_trigger, {
+        'event_id': 'SERIAL PRIMARY KEY',
+        'event_headline': 'TEXT NOT NULL',
+        'description': 'TEXT',
+        'year': 'INTEGER', 
+        'month': 'INTEGER', 
+        'dofm': 'INTEGER', 
+        'time': 'INTEGER',
+        'notes': 'TEXT', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'custom_fields': 'JSONB'
+        }),
+    'factions': (create_table_mod_trigger, {
+        'faction_id': 'SERIAL PRIMARY KEY',
+        'faction_name': 'TEXT NOT NULL', 
+        'description': 'TEXT',
+        'notes': 'TEXT', 
+        'is_species': 'BOOLEAN DEFAULT FALSE', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'custom_fields': 'JSONB'
+        }),
+    'powers': (create_table_mod_trigger, {
+        'power_id': 'SERIAL PRIMARY KEY',
+        'power_name': 'TEXT NOT NULL', 
+        'description': 'TEXT',
+        'limits': 'TEXT', 
+        'notes': 'TEXT', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'custom_fields': 'JSONB'
+        }),
+    'locations': (create_table_mod_trigger, {
+        'location_id': 'SERIAL PRIMARY KEY',
+        'location_name': 'TEXT NOT NULL', 
+        'description': 'TEXT',
+        'notes': 'TEXT', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'custom_fields': 'JSONB'
+        }),
+    'maps': (create_table_mod_trigger, {
+        'map_id': 'SERIAL PRIMARY KEY',
+        'map_name': 'TEXT NOT NULL', 
+        'caption': 'TEXT',
+        'notes': 'TEXT', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'custom_fields': 'JSONB'
+        }),
+    'images': (create_table_mod_trigger, {
+        'image_id': 'SERIAL PRIMARY KEY',
+        'image_name': 'TEXT NOT NULL', 
+        'orig_filename': 'TEXT NOT NULL', 
+        'caption': 'TEXT', 
+        'notes': 'TEXT', 
+        'secret': 'BOOLEAN DEFAULT FALSE', 
+        'created': 'TIMESTAMPTZ NOT NULL DEFAULT Now()', 
+        'modified': 'TIMESTAMPTZ NOT NULL DEFAULT Now()',
+        'thumbnail': 'BYTEA NOT NULL',
+        'file_data': 'BYTEA NOT NULL'
+        }),
+    'images_relations': (create_table, {
+        'image_id': 'INTEGER REFERENCES images(image_id) ON DELETE RESTRICT',
+        'character_id': 'INTEGER REFERENCES characters ON DELETE CASCADE ON UPDATE CASCADE',
+        'event_id': 'INTEGER REFERENCES events ON DELETE CASCADE ON UPDATE CASCADE',
+        'faction_id': 'INTEGER REFERENCES factions ON DELETE CASCADE ON UPDATE CASCADE',
+        'power_id': 'INTEGER REFERENCES powers ON DELETE CASCADE ON UPDATE CASCADE',
+        'location_id': 'INTEGER REFERENCES locations ON DELETE CASCADE ON UPDATE CASCADE',
+        'map_id': 'INTEGER REFERENCES maps ON DELETE CASCADE ON UPDATE CASCADE',
+        }),
+    'character_relations': (create_table, {
+        'primary_character_id': 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'secondary_character_id': 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'relationship_from_pc': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_sc': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'character_event_relations': (create_table, {
+        'character_id': 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'relationship_from_c': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_e': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'character_faction_relations': (create_table, {
+        'character_id': 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'relationship_from_c': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_f': 'TEXT NOT NULL DEFAULT \'Relationship\'',
+        'character_is_species': 'BOOLEAN DEFAULT FALSE'
+        }),
+    'character_power_relations': (create_table, {
+        'character_id': 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'power_id': 'INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
+        'relationship_from_c': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_p': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'details': 'TEXT'
+        }),
+    'character_location_relations': (create_table, {
+        'character_id': 'INTEGER NOT NULL REFERENCES characters ON DELETE CASCADE',
+        'location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'relationship_from_c': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_l': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'is_homeland': 'BOOLEAN NOT NULL DEFAULT False'
+        }),
+    'event_faction_relations': (create_table, {
+        'event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'relationship_from_e': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_f': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        }),
+    'event_event_relations': (create_table, {
+        'primary_event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'secondary_event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'relationship_from_pe': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_se': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'event_location_relations': (create_table, {
+        'event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'relationship_from_e': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_l': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'faction_faction_relations': (create_table, {
+        'primary_faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'secondary_faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'relationship_from_pf': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_sf': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'faction_location_relations': (create_table, {
+        'faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'relationship_from_f': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_l': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'is_homeland': 'BOOLEAN NOT NULL DEFAULT False'
+        }),
+    'faction_power_relations': (create_table, {
+        'faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
+        'power_id': 'INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
+        'relationship_from_f': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_p': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'details': 'TEXT'
+        }),
+    'power_event_relations': (create_table, {
+        'power_id': 'INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
+        'event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
+        'relationship_from_p': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_e': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'power_power_relations': (create_table, {
+        'primary_power_id': 'INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
+        'secondary_power_id': 'INTEGER NOT NULL REFERENCES powers ON DELETE CASCADE',
+        'relationship_from_pp': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_sp': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'location_location_table': (create_table, {
+        'parent_location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'child_power_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'relationship_from_pl': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
+        'relationship_from_cl': 'TEXT NOT NULL DEFAULT \'Relationship\''
+        }),
+    'map_location_item': (create_table, {
+        'map_id': 'INTEGER NOT NULL REFERENCES maps ON DELETE CASCADE',
+        'location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
+        'map_contains': 'JSONB'
+        }),
     
     }
 
 
-table_names_func_column = {
-    'event_faction_relations' : (create_events_factions_table, {
-        'event_id' : 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
-        'faction_id' : 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',
-        'relationship_from_e' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
-        'relationship_from_f' : 'TEXT NOT NULL DEFAULT \'Relationship\'', 
-        })
+
+
+
+
+
+
+'''
+Notes from specific create table functions that need to be moved into a 
+more useful location now that those functions are deleted and merged into
+a dictionary:
+
+characters: character_name will be displayed in selection menus.
+
+events: event_headline will be displayed in selection menus.
+    Year, Month, Day of Month, Time will be used to generate position in Timeline.
+    They are all integers, because they are referring to possibly fictitious 
+    date/time information that may not work with a normal datetime format. 
+
+factions: faction_name will be displayed in selection menus.
+    is_species is used to determine whether entry appears in faction selections
+    (False) or in species selections (True).
+
+powers: power_name will be displayed in selection menus.
+
+locations: location_name will be displayed in selection menus.
+
+maps: map_name will be displayed in selection menus.
+    caption will be displayed on map.
+
+images: image_name will be displayed in selection menus.
+    caption will be displayed under image in inline display situations.
+    notes will be displayed in direct image views.
+
+character_relations: relationship_from_pc will be displayed in connections on the primary 
+    character view
+    relationship_from_sc will be displayed in connections on the secondary 
+    character view
+
+character_event_relations: relationship_from_c will be displayed in connections on the character view
+    relationship_from_e will be displayed in connections on the event view
+
+character_faction_relations: relationship_from_c will be displayed in connections on the character view
+    relationship_from_f will be displayed in connections on the faction view
+    character_is_species is used in reference to this specific relationship and will apply 
+    the selection to a specific field in character view. 
+
+character_power_relations: relationship_from_c will be displayed in connections on the character view
+    relationship_from_p will be displayed in connections on the event view
+    details will be displayed on the character view
+
+character_location_relations: relationship_from_c will be displayed in connections on the character view
+    relationship_from_l will be displayed in connections on the location view
+    is_homeland determines display in specific location on character view
+
+map_location_item: location_id is the location associated with map_id, 
+    map_contains is json with location ids (if applicable) and coords of 
+    locations and items pictured on this map
     
-    }
 
 
 
+'''
 
 
 

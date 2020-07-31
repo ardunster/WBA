@@ -9,58 +9,9 @@ Created on Fri Jul  3 15:41:53 2020
 """
 
 '''
-need to;
-check for existence of the db we want
-create it if not. Maybe these two can run in setup.py? I'll get it working now
-and move later if need be.
-
-need functions that export db and import db. -> autosave option, automatically 
-exports db at x interval, or on exit?
-
-in setup, also need options for importing from existing file. and of course
-all the different kinds of setup options, ie, questions for multiple species, 
-that kind of thing.
-
-setup should also ask if connecting to a local or remote pgsql.
-
-setup should probably pass those arguments to dbinterface though and call 
-functions from here. Literally anything that touches PostgreSQL should happen
-through this script.
-
-need to: figure out a way to write config in a secure way, at a minimum, the
-PostgreSQL password, if not other login details, to be not human readable in
-config file. 
-
-Currently using a username and password that only has access to that specific 
-database, but, who knows what user will use? and we don't want someone being able to 
-get in and write in that database anyway.
-maybe: https://www.mssqltips.com/sqlservertip/5173/encrypting-passwords-for-use-with-python-and-sql-server/
-Maybe: gen the config in one function, write it to a bin in a separate function?
-First, need to make sure I have a functional config accessible.
-
-todo: create a function for verifying the login credentials stored in config work, and 
-otherwise return error.
-
-todo: fix anything that actually takes user input to SQL to prevent injections
-
-todo: setup config/opts to allow user to select "TTRPG" setting, which will enable 
-stat blocks on relevant entries, other possible options?
-
-todo: function to check what columns are in a table
-
-custom columns - label serially, custom_1, custom_2, etc? Where to store the 
-custom name of the custom column? -> JSON
-
-todo: setup a table specifically for storing any config files other than pgs_config
-remotely, so interface can be consistent and any custom settings, columsn, etc
-can be retained.   Do I actually need to write config to disk in this case? 
-Store both ways and export with data export?
-
-today's todo: code a new create table function that will take a dictionary input
-instead of kwarg input to simplify designing new tables and separate concerns,
-also to practice proper use of inputs to sql such as identifiers, etc., also to 
-facilitate comparison of columns to database in case of updates, and so on.
-
+Literally anything that touches PostgreSQL should happen through this module.
+That way, if database decisions change, the rest of the software doesn't have 
+to be affected.
 '''
 
 import psycopg2 as pg2
@@ -262,88 +213,7 @@ def fetch_from_table(table_name):
 
 
 
-def write_new_char(**kwargs):
-    """
-    Write a new entry in character table
-    """
-    
-    write_new_to_table('character', **kwargs)
-    
-    # This works but is probably pointless. What's my architecture going to
-    # look like to make a new entry? I'll come back to this/make more if
-    # caling write_new_to_table() doesn't work well enough by itself, otherwise 
-    # I'll delete this if I don't end up actually using it. 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-Notes from specific create table functions that need to be moved into a 
-more useful location now that those functions are deleted and merged into
-a dictionary:
-
-characters: character_name will be displayed in selection menus.
-
-events: event_headline will be displayed in selection menus.
-    Year, Month, Day of Month, Time will be used to generate position in Timeline.
-    They are all integers, because they are referring to possibly fictitious 
-    date/time information that may not work with a normal datetime format. 
-
-factions: faction_name will be displayed in selection menus.
-    is_species is used to determine whether entry appears in faction selections
-    (False) or in species selections (True).
-
-powers: power_name will be displayed in selection menus.
-
-locations: location_name will be displayed in selection menus.
-
-maps: map_name will be displayed in selection menus.
-    caption will be displayed on map.
-
-images: image_name will be displayed in selection menus.
-    caption will be displayed under image in inline display situations.
-    notes will be displayed in direct image views.
-
-character_relations: relationship_from_pc will be displayed in connections on the primary 
-    character view
-    relationship_from_sc will be displayed in connections on the secondary 
-    character view
-
-character_event_relations: relationship_from_c will be displayed in connections on the character view
-    relationship_from_e will be displayed in connections on the event view
-
-character_faction_relations: relationship_from_c will be displayed in connections on the character view
-    relationship_from_f will be displayed in connections on the faction view
-    character_is_species is used in reference to this specific relationship and will apply 
-    the selection to a specific field in character view. 
-
-character_power_relations: relationship_from_c will be displayed in connections on the character view
-    relationship_from_p will be displayed in connections on the event view
-    details will be displayed on the character view
-
-character_location_relations: relationship_from_c will be displayed in connections on the character view
-    relationship_from_l will be displayed in connections on the location view
-    is_homeland determines display in specific location on character view
-
-map_location_item: location_id is the location associated with map_id, 
-    map_contains is json with location ids (if applicable) and coords of 
-    locations and items pictured on this map
-    
-
-
-
-'''
 
 
 

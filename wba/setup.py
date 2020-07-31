@@ -148,7 +148,7 @@ table_names_functions = {
         'location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
         'relationship_from_c': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
         'relationship_from_l': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
-        'is_homeland': 'BOOLEAN NOT NULL DEFAULT False'
+        'is_homeland': 'BOOLEAN NOT NULL DEFAULT FALSE'
         }),
     'event_faction_relations': (dbi.create_table, {
         'event_id': 'INTEGER NOT NULL REFERENCES events ON DELETE CASCADE',
@@ -179,7 +179,7 @@ table_names_functions = {
         'location_id': 'INTEGER NOT NULL REFERENCES locations ON DELETE CASCADE',
         'relationship_from_f': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
         'relationship_from_l': 'TEXT NOT NULL DEFAULT \'Relationship\'', 
-        'is_homeland': 'BOOLEAN NOT NULL DEFAULT False'
+        'is_homeland': 'BOOLEAN NOT NULL DEFAULT FALSE'
         }),
     'faction_power_relations': (dbi.create_table, {
         'faction_id': 'INTEGER NOT NULL REFERENCES factions ON DELETE CASCADE',

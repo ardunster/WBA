@@ -182,24 +182,26 @@ def create_table_mod_trigger(table_name, columns):
     setup_modified_trigger(table_name)
     
 
-def write_new_to_table(table_name, **kwargs):
+def write_new_to_table(table_name, input_dict):
     """
     Writes a single new entry to specified table
     """
-    # TODO: needs rewrite to prevent SQL injection/input bugs
+
     conn = conn_wba(*get_pgs_config())
     
-    write = f'''INSERT INTO {table_name} ('''
-    for key in kwargs:
-        write += f'''{key}, '''
-    write = write[:-2]
-    write += ''') VALUES ('''
-    for key in kwargs:
-        write += f"""'{kwargs[key]}', """
-    write = write[:-2]
-    write += ''');'''
+    cols = tuple(input_dict)
+    data = tuple(input_dict.values())
     
-    conn.cursor().execute(write)
+    
+    query = f'''INSERT INTO {table_name} ('''
+    for col in cols:
+        query += f'''{col}, '''
+    query = query[:-2]
+    query += ''') VALUES (''' + '%s, '*len(data)
+    query = query[:-2] + ')'
+
+    
+    conn.cursor().execute(query, data)
     conn.commit()
 
     conn.close()

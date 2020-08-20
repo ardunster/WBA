@@ -26,15 +26,15 @@ logpath = os.path.join('logs', '')
 
 
 class IDError(Exception):
-    '''
+    """
     Raise when ID is invalid or missing for functions that require it.
-    '''
+    """
     pass
 
 
 def dbi_log(log_input):
     """
-    Can be called any time data needs to be logged. Writes to file.
+    Write to file. Can be called any time data needs to be logged. 
     """
     try:
         with open(logpath + 'dbi_logs.log', 'a') as dbi_logfile:
@@ -48,7 +48,7 @@ def dbi_log(log_input):
 
 def write_pgs_config(hostname='localhost',port='5432',username='wba_login',password='wba_password',dbname='wba_default'):
     """
-    Writes PostgreSQL config file based on variables passed.
+    Write PostgreSQL config file based on variables passed.
     """
     config['PostgreSQL'] = {'hostname':hostname,
                             'port':port,
@@ -66,7 +66,7 @@ def write_pgs_config(hostname='localhost',port='5432',username='wba_login',passw
 
 def get_pgs_config():
     """
-    Fetches and returns the PostgreSQL config from file.
+    Fetch and returns the PostgreSQL config from file.
     """
     try:
         config.read(configpath + 'pgs_config.ini')
@@ -84,7 +84,7 @@ def get_pgs_config():
 
 def conn_wba(hostname,port,username,password,dbname):
     """
-    Builds a connection to the PostgreSQL server
+    Build a connection to the PostgreSQL server
     """
     try:
         conn = pg2.connect(f'dbname={dbname} user={username} password={password} host={hostname} port={port}')
@@ -118,9 +118,9 @@ def check_for_table(table_name):
 
 
 def pk_id_included(input_string):
-    '''
+    """
     Verify whether input matches PK id pattern
-    '''
+    """
     
     re_match = re.search('_id$', input_string)
     
@@ -149,7 +149,7 @@ def create_table(table_name, columns):
 
 def setup_modified_function():
     """
-    Creates the function update_modified_function() in PostgreSQL to update last modified columns
+    Create the function update_modified_function() in PostgreSQL to update last modified columns
     """
     conn = conn_wba(*get_pgs_config())
     
@@ -172,7 +172,7 @@ def setup_modified_function():
 
 def setup_modified_trigger(table_name):
     """
-    Sets up trigger for modified column function in specified table name
+    Set up trigger for modified column function in specified table name
     """
     conn = conn_wba(*get_pgs_config())
     
@@ -199,10 +199,20 @@ def create_table_mod_trigger(table_name, columns):
     create_table(table_name, columns)
     setup_modified_trigger(table_name)
     
+    
+def verify_columns(table_name, columns):
+    """
+    Verify columns are set up correctly.
+    table_name as string
+    columns as dictionary or tuple
+    """
+    #TODO
+    pass
+    
 
 def write_new_to_table(table_name, input_dict):
     """
-    Writes a single new entry to specified table. Takes as input:
+    Write a single new entry to specified table. Takes as input:
     table_name as string
     input_dict as 'col': 'value'
     """
@@ -210,52 +220,30 @@ def write_new_to_table(table_name, input_dict):
     cols = tuple(input_dict)
     data = tuple(input_dict.values())
 
-    query = f'''INSERT INTO {table_name} ('''
+    write = f'''INSERT INTO {table_name} ('''
     for col in cols:
-        query += f'''{col}, '''
-    query = query[:-2]
-    query += ''') VALUES (''' + '%s, '*len(data)
-    query = query[:-2] + ')'
+        write += f'''{col}, '''
+    write = write[:-2]
+    write += ''') VALUES (''' + '%s, '*len(data)
+    write = write[:-2] + ')'
     
     
     conn = conn_wba(*get_pgs_config())
     
-    conn.cursor().execute(query, data)
+    conn.cursor().execute(write, data)
     conn.commit()
 
     conn.close()
 
 
 def update_row(table_name, input_dict):
-    '''
-    Updates a single entry in a specified table. Takes as input:
+    """
+    Update a single entry in a specified table. Takes as input:
     table_name as string
     input_dict as 'col': 'value', requires PK id column
-    '''
+    """
     
-    # cols = tuple(input_dict)
-    # data = tuple(input_dict.values())
-    
-    # pk_id_bool = False
-    # for i, v in enumerate(cols):
-    #     if pk_id_included(v) == True:
-    #         pk_id_bool = True
-    #         pk_id = i
-    
-    # if not pk_id_bool:
-    #     raise IDError('No valid id input')
-    
-    # # print(f'pk_id_bool = {pk_id_bool}, pk_id = {pk_id}')
-    # id_col = cols[pk_id]
-    # id_val = data[pk_id]
-    
-    # # print(f'id_col = {id_col} id_val = {id_val}')
-    
-    # cols = cols[:pk_id] + cols[pk_id + 1:]
-    # data = data[:pk_id] + data[pk_id + 1:]
-    # # print(cols, data)
-
-    
+    # Verify input contains an _id column and returns column name and id value
     pk_id_bool = False
     for k, v in input_dict.items():
         if pk_id_included(k) == True:
@@ -265,49 +253,96 @@ def update_row(table_name, input_dict):
     
     if not pk_id_bool:
         raise IDError('No valid id input')
-        
-    # print(f'pk_id_bool = {pk_id_bool}, pk_id = {pk_id}, pk_val = {pk_val}')
     
     input_dict.pop(pk_id)
     
-    # for k,v in input_dict.items():
-    #     print(f'k = {k}, v = {v}')
-        
     cols = tuple(input_dict)
     data = tuple(input_dict.values())
 
-
-    query = f'''UPDATE {table_name} '''
+    write = f'''UPDATE {table_name} '''
     for col in cols:
-        query += f'''SET {col} = %s, '''
-    query = query[:-2]
-    query += f''' WHERE {pk_id} = '{pk_val}';'''
-    
-    print(query)
+        write += f'''SET {col} = %s, '''
+    write = write[:-2]
+    write += f''' WHERE {pk_id} = '{pk_val}';'''
     
     conn = conn_wba(*get_pgs_config())
     
-    conn.cursor().execute(query, data)
+    conn.cursor().execute(write, data)
     conn.commit()
 
     conn.close()
 
 
 
-def fetch_cols_from_table(table_name, name_col):
-    '''
-    Fetches primary keys and names from table
-    '''
-    pass
-
-
-def fetch_one_from_table(table_name, input_id):
+def fetch_cols_from_table(table_name, cols):
     """
-    Retrieves information from table, returns ?
+    Fetche primary keys and names from table
     """
+    
+    query = '''SELECT '''
+    for col in cols:
+        query += f'''{col}, '''
+    query = query[:-2]
+    query += f''' FROM {table_name};'''
+    
+    conn = conn_wba(*get_pgs_config())
+    
+    cur = conn.cursor()
+    
+    cur.execute(query)
+    output = cur.fetchall()
+
+    conn.close()
+    
+    return output
+
+
+def fetch_one_from_table(table_name, id_col_val):
+    """
+    Retrieve one row of information from table.
+    Input:
+    table_name as string
+    id_col_val as dict
+    Returns:
+    values as tuple
+    """
+    
+    # Verify input contains an _id column and returns column name and id value
+    pk_id_bool = False
+    for k, v in id_col_val.items():
+        if pk_id_included(k) == True:
+            pk_id_bool = True
+            pk_id = k
+            pk_val = v
+    
+    if not pk_id_bool:
+        raise IDError('No valid id input')
+    
+    query = f'''SELECT * FROM {table_name} WHERE {pk_id} = {pk_val};'''
+    
+    conn = conn_wba(*get_pgs_config())
+    
+    cur = conn.cursor()
+    
+    cur.execute(query)
+    output = cur.fetchone()
+
+    conn.close()
+    
+    return output
+
+
+def fetch_relations_from_table(table_name, id_col_val):
+    """
+    Retrieve all rows from a relational table that match.
+    Input:
+    table_name as string
+    id_col_val as dict
+    Returns:
+    List of matching tuples
+    """
+    #TODO
     pass
-
-
 
 
 

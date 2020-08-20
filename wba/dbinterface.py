@@ -184,7 +184,9 @@ def create_table_mod_trigger(table_name, columns):
 
 def write_new_to_table(table_name, input_dict):
     """
-    Writes a single new entry to specified table
+    Writes a single new entry to specified table. Takes as input:
+    table_name as string
+    input_dict as 'col': 'value'
     """
 
     conn = conn_wba(*get_pgs_config())

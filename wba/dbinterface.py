@@ -18,10 +18,18 @@ import psycopg2 as pg2
 import configparser
 import os
 import datetime
+import re
 
 config = configparser.ConfigParser()
 configpath = os.path.join('config', '')
 logpath = os.path.join('logs', '')
+
+
+class IDError(Exception):
+    '''
+    Raise when ID is invalid or missing for functions that require it.
+    '''
+    pass
 
 
 def dbi_log(log_input):
@@ -109,6 +117,16 @@ def check_for_table(table_name):
         conn.close()
 
 
+def pk_id_included(input_string):
+    '''
+    Verify whether input matches PK id pattern
+    '''
+    
+    re_match = re.search('_id$', input_string)
+    
+    return bool(re_match)
+
+
 def create_table(table_name, columns):
     """
     Create a table in the WBA database.
@@ -188,20 +206,19 @@ def write_new_to_table(table_name, input_dict):
     table_name as string
     input_dict as 'col': 'value'
     """
-
-    conn = conn_wba(*get_pgs_config())
     
     cols = tuple(input_dict)
     data = tuple(input_dict.values())
-    
-    
+
     query = f'''INSERT INTO {table_name} ('''
     for col in cols:
         query += f'''{col}, '''
     query = query[:-2]
     query += ''') VALUES (''' + '%s, '*len(data)
     query = query[:-2] + ')'
-
+    
+    
+    conn = conn_wba(*get_pgs_config())
     
     conn.cursor().execute(query, data)
     conn.commit()
@@ -209,7 +226,82 @@ def write_new_to_table(table_name, input_dict):
     conn.close()
 
 
-def fetch_from_table(table_name):
+def update_row(table_name, input_dict):
+    '''
+    Updates a single entry in a specified table. Takes as input:
+    table_name as string
+    input_dict as 'col': 'value', requires PK id column
+    '''
+    
+    # cols = tuple(input_dict)
+    # data = tuple(input_dict.values())
+    
+    # pk_id_bool = False
+    # for i, v in enumerate(cols):
+    #     if pk_id_included(v) == True:
+    #         pk_id_bool = True
+    #         pk_id = i
+    
+    # if not pk_id_bool:
+    #     raise IDError('No valid id input')
+    
+    # # print(f'pk_id_bool = {pk_id_bool}, pk_id = {pk_id}')
+    # id_col = cols[pk_id]
+    # id_val = data[pk_id]
+    
+    # # print(f'id_col = {id_col} id_val = {id_val}')
+    
+    # cols = cols[:pk_id] + cols[pk_id + 1:]
+    # data = data[:pk_id] + data[pk_id + 1:]
+    # # print(cols, data)
+
+    
+    pk_id_bool = False
+    for k, v in input_dict.items():
+        if pk_id_included(k) == True:
+            pk_id_bool = True
+            pk_id = k
+            pk_val = v
+    
+    if not pk_id_bool:
+        raise IDError('No valid id input')
+        
+    # print(f'pk_id_bool = {pk_id_bool}, pk_id = {pk_id}, pk_val = {pk_val}')
+    
+    input_dict.pop(pk_id)
+    
+    # for k,v in input_dict.items():
+    #     print(f'k = {k}, v = {v}')
+        
+    cols = tuple(input_dict)
+    data = tuple(input_dict.values())
+
+
+    query = f'''UPDATE {table_name} '''
+    for col in cols:
+        query += f'''SET {col} = %s, '''
+    query = query[:-2]
+    query += f''' WHERE {pk_id} = '{pk_val}';'''
+    
+    print(query)
+    
+    conn = conn_wba(*get_pgs_config())
+    
+    conn.cursor().execute(query, data)
+    conn.commit()
+
+    conn.close()
+
+
+
+def fetch_cols_from_table(table_name, name_col):
+    '''
+    Fetches primary keys and names from table
+    '''
+    pass
+
+
+def fetch_one_from_table(table_name, input_id):
     """
     Retrieves information from table, returns ?
     """

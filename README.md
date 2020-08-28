@@ -4,6 +4,8 @@ WBA is an in-progress application designed to help authors with tasks of world b
 
 If you'd like to view updates, such as posts on my decision making process for various technologies, they're available [on my blog under the WBA tag](https://annardunster.com/tag/wba/). 
 
+Keep in mind, I am practicing using branching to develop features. If you don't see any recent updates in `primary`, check for an alternate branch that I may be working in!
+
 ## Overview
 
 WBA is a tool for keeping all your world building information together and organized, and easily seeing what different pieces of your world link together and how. It groups data by Character, Event, Location, Faction (or Species), and Power (or Magic), and provides for linking each of these to each other.

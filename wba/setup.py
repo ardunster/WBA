@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Run on install to set up SQL tables,
+# TODO configs, etc? 
+
 Created on Fri Jul  3 18:20:35 2020
 
 @author: adunster

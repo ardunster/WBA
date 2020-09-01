@@ -74,6 +74,27 @@ class HalloWidget(QtWidgets.QWidget):
         console()
 
 
+class Form(QtWidgets.QDialog):
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("teh aqesome")
+        
+        self.edit = QtWidgets.QLineEdit("write some thing here ish")
+        self.button = QtWidgets.QPushButton("Greetin'z")
+        self.button.clicked.connect(self.greetings)
+        
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.edit)
+        layout.addWidget(self.button)
+        
+        self.setLayout(layout)
+        
+        
+        
+    def greetings(self):
+        print(f'Hola {self.edit.text()}')
+
 @QtCore.Slot()
 def console():
     print("haz cliq alli.")
@@ -82,9 +103,12 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     app.setStyle('Fusion')
     
-    widget = HalloWidget()
-    widget.resize(800,600)
-    widget.show()
+    # widget = HalloWidget()
+    # widget.resize(800,600)
+    # widget.show()
+    
+    form = Form()
+    form.show()
     
     sys.exit(app.exec_())
     

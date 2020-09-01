@@ -13,12 +13,10 @@ import sys
 from PySide2 import QtCore, QtWidgets, QtGui
 
 
-class Form(QtWidgets.QDialog):
-
-    def __init__(self, parent=None):
-        super(Form, self).__init__(parent)
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__(self)
         self.setWindowTitle("WorldBuilder Alpha")
-        
 
 class Character(QtWidgets.QWidget):
     """

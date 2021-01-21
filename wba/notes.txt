@@ -1,0 +1,24 @@
+main program:
+try:
+    load config
+except (file not found):
+    run new config setup
+
+new config setup: confirms that you don't have a config and defaults to set up
+new. Option to import config file. (Security? - maybe actually secure
+credentials - ie username, password for psql are not stored in config, but in a separate unrecoverable file -
+then how does the program recover them when restart?)
+
+config setup screen (same screen can be accessed in-program):
+    table
+    interface   is main     is backup
+    json        radio       multi check
+    psql        radio       multi check
+    solid pod   radio       multi check
+    etc 
+
+    any checked option will have further setup options
+    warn if switching main from one to another if there is data: sync first,
+    does not delete old data, may take time if not previously set up
+
+    backup: how often do we sync?
